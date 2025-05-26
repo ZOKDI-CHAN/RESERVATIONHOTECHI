@@ -1,0 +1,205 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Hotel Room Reservation</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f4f4;
+      margin: 0;
+      padding: 0;
+    }
+    .container {
+      max-width: 600px;
+      margin: auto;
+      padding: 20px;
+    }
+    .hidden {
+      display: none;
+    }
+    h2 {
+      text-align: center;
+    }
+    label {
+      display: block;
+      margin-top: 10px;
+    }
+    input, select {
+      width: 100%;
+      padding: 10px;
+      margin-top: 5px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+    button {
+      margin-top: 20px;
+      padding: 10px;
+      background: #28a745;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      font-size: 16px;
+    }
+    .nav-btn {
+      width: 48%;
+      background: #007bff;
+    }
+    .admin-btn {
+      background: #6c757d;
+    }
+    .logout-btn {
+      background: #dc3545;
+    }
+    .confirmation {
+      margin-top: 20px;
+      background: #d4edda;
+      padding: 15px;
+      border-radius: 5px;
+      color: #155724;
+    }
+    table {
+      width: 100%;
+      margin-top: 20px;
+      border-collapse: collapse;
+    }
+    th, td {
+      padding: 10px;
+      border: 1px solid #ccc;
+    }
+    th {
+      background: #007bff;
+      color: white;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+
+  <div id="homeScreen">
+    <h2>Welcome to Hotel Reservation</h2>
+    <button class="nav-btn" onclick="showSection('applicationForm')">Apply for a Room</button>
+    <button class="nav-btn admin-btn" onclick="showSection('adminLogin')">Admin Panel</button>
+  </div>
+
+  <div id="applicationForm" class="hidden">
+    <h2>Reserve a Hotel Room</h2>
+    <form id="reservationForm">
+      <label for="name">Full Name</label>
+      <input type="text" id="name" required>
+      <label for="email">Email Address</label>
+      <input type="email" id="email" required>
+      <label for="room">Room Type</label>
+      <select id="room">
+        <option>Single</option>
+        <option>Double</option>
+        <option>Suite</option>
+      </select>
+      <button type="submit">Reserve</button>
+    </form>
+    <div class="confirmation hidden" id="confirmationMessage">Thank you! Your reservation has been submitted.</div>
+    <button onclick="goHome()">Back</button>
+  </div>
+
+  <div id="adminLogin" class="hidden">
+    <h2 id="formTitle">Admin Sign Up</h2>
+    <form id="authForm">
+      <label for="username">Username</label>
+      <input type="text" id="username" required>
+      <label for="password">Password</label>
+      <input type="password" id="password" required>
+      <button type="submit">Submit</button>
+    </form>
+    <p class="confirmation hidden" id="loginError"></p>
+    <button onclick="goHome()">Back</button>
+  </div>
+
+  <div id="adminPanel" class="hidden">
+    <h2>Admin Panel</h2>
+    <table>
+      <thead>
+        <tr><th>Name</th><th>Email</th><th>Room</th></tr>
+      </thead>
+      <tbody id="adminTable"></tbody>
+    </table>
+    <button onclick="clearApplications()">Clear All</button>
+    <button class="logout-btn" onclick="logout()">Logout</button>
+  </div>
+
+</div>
+
+<script>
+  const reservationForm = document.getElementById('reservationForm');
+  const confirmationMessage = document.getElementById('confirmationMessage');
+  const authForm = document.getElementById('authForm');
+  const formTitle = document.getElementById('formTitle');
+  const loginError = document.getElementById('loginError');
+  const admin = JSON.parse(localStorage.getItem('admin'));
+
+  function showSection(id) {
+    document.querySelectorAll('.container > div').forEach(div => div.classList.add('hidden'));
+    document.getElementById(id).classList.remove('hidden');
+    if (id === 'adminLogin' && localStorage.getItem('admin')) formTitle.textContent = 'Admin Login';
+  }
+
+  function goHome() {
+    document.querySelectorAll('.container > div').forEach(div => div.classList.add('hidden'));
+    document.getElementById('homeScreen').classList.remove('hidden');
+  }
+
+  reservationForm.addEventListener('submit', e => {
+    e.preventDefault();
+    const name = document.getElementById('name').value;
+    const email = document.getElementById('email').value;
+    const room = document.getElementById('room').value;
+    const apps = JSON.parse(localStorage.getItem('applications')) || [];
+    apps.push({ name, email, room });
+    localStorage.setItem('applications', JSON.stringify(apps));
+    confirmationMessage.classList.remove('hidden');
+    reservationForm.reset();
+  });
+
+  authForm.addEventListener('submit', e => {
+    e.preventDefault();
+    const username = document.getElementById('username').value;
+    const password = document.getElementById('password').value;
+    const stored = JSON.parse(localStorage.getItem('admin'));
+    if (!stored) {
+      localStorage.setItem('admin', JSON.stringify({ username, password }));
+      loadAdminPanel();
+    } else if (stored.username === username && stored.password === password) {
+      loadAdminPanel();
+    } else {
+      loginError.textContent = "Incorrect login.";
+      loginError.classList.remove('hidden');
+    }
+  });
+
+  function loadAdminPanel() {
+    showSection('adminPanel');
+    const tbody = document.getElementById('adminTable');
+    tbody.innerHTML = '';
+    const apps = JSON.parse(localStorage.getItem('applications')) || [];
+    apps.forEach(app => {
+      const row = `<tr><td>${app.name}</td><td>${app.email}</td><td>${app.room}</td></tr>`;
+      tbody.innerHTML += row;
+    });
+  }
+
+  function clearApplications() {
+    if (confirm("Delete all applications?")) {
+      localStorage.removeItem('applications');
+      loadAdminPanel();
+    }
+  }
+
+  function logout() {
+    localStorage.removeItem('admin');
+    goHome();
+  }
+</script>
+
+</body>
+</html>
